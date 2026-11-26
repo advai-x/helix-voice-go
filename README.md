@@ -7,7 +7,7 @@ Use the Helix Voice developer API to generate speech, transcribe audio, and mana
 Requires Go 1.18 or later. Run this command in your Go module.
 
 ```sh
-go get github.com/advai-x/helix-voice-go@v0.1.0
+go get github.com/advai-x/helix-voice-go@v0.2.0
 ```
 
 Import `github.com/advai-x/helix-voice-go`. The package name is `helixvoice`.
