@@ -1,7 +1,7 @@
 /*
 Helix Voice API
 
-Versioned developer speech API and anonymous product preview.
+Versioned developer speech API for authenticated accounts.
 
 API version: 1.0.0
 */
@@ -53,8 +53,6 @@ type APIClient struct {
 
 	GenerationsAPI *GenerationsAPIService
 
-	PreviewAPI *PreviewAPIService
-
 	SpeechAPI *SpeechAPIService
 
 	TranscriptionsAPI *TranscriptionsAPIService
@@ -80,7 +78,6 @@ func NewAPIClient(cfg *Configuration) *APIClient {
 	// API Services
 	c.CapabilitiesAPI = (*CapabilitiesAPIService)(&c.common)
 	c.GenerationsAPI = (*GenerationsAPIService)(&c.common)
-	c.PreviewAPI = (*PreviewAPIService)(&c.common)
 	c.SpeechAPI = (*SpeechAPIService)(&c.common)
 	c.TranscriptionsAPI = (*TranscriptionsAPIService)(&c.common)
 	c.VoicesAPI = (*VoicesAPIService)(&c.common)

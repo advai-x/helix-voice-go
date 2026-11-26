@@ -52,11 +52,6 @@ func (e *SpeechSaveError) Error() string {
 }
 func (e *SpeechSaveError) Unwrap() error { return e.Cause }
 
-type PreviewResult struct {
-	Audio []byte
-	Cache string
-}
-
 type transport struct {
 	base string
 	key  string
@@ -98,9 +93,7 @@ func (t *transport) send(ctx context.Context, verb, route, accept, contentType s
 		return nil, err
 	}
 	req.Header.Set("Accept", accept)
-	if t.key != "" {
-		req.Header.Set("Authorization", "Bearer "+t.key)
-	}
+	req.Header.Set("Authorization", "Bearer "+t.key)
 	if body != nil {
 		req.Header.Set("Content-Type", contentType)
 	}
@@ -200,23 +193,23 @@ func fetchJSON[T any](ctx context.Context, t *transport, verb, route, contentTyp
 	return result, responseError(response, "Unexpected Helix Voice JSON response")
 }
 
-func (t *transport) wav(ctx context.Context, verb, route string, body io.Reader) (PreviewResult, error) {
-	response, err := t.send(ctx, verb, route, "audio/wav", "application/json", body)
+func (t *transport) wav(ctx context.Context, route string) ([]byte, error) {
+	response, err := t.send(ctx, http.MethodGet, route, "audio/wav", "", nil)
 	if err != nil {
-		return PreviewResult{}, err
+		return nil, err
 	}
 	defer response.Body.Close()
 	if mediaType(response) != "audio/wav" {
-		return PreviewResult{}, responseError(response, "Expected a WAV response")
+		return nil, responseError(response, "Expected a WAV response")
 	}
 	data, err := readLimit(response.Body, maxWAV)
 	if errors.Is(err, errSize) {
 		err = responseError(response, "WAV exceeds the SDK response size limit")
 	}
 	if err != nil {
-		return PreviewResult{}, err
+		return nil, err
 	}
-	return PreviewResult{Audio: data, Cache: response.Header.Get("X-TTS-Preview-Cache")}, nil
+	return data, nil
 }
 
 func (t *transport) remove(ctx context.Context, route string) error {
@@ -390,8 +383,7 @@ func (c *Client) DownloadGeneration(ctx context.Context, id string) ([]byte, err
 	if err != nil {
 		return nil, err
 	}
-	result, err := c.http.wav(ctx, http.MethodGet, "/v1/generations/"+segment+"/audio", nil)
-	return result.Audio, err
+	return c.http.wav(ctx, "/v1/generations/"+segment+"/audio")
 }
 
 func (c *Client) DeleteGeneration(ctx context.Context, id string) error {
@@ -400,26 +392,4 @@ func (c *Client) DeleteGeneration(ctx context.Context, id string) error {
 		return err
 	}
 	return c.http.remove(ctx, "/v1/generations/"+segment)
-}
-
-type PreviewClient struct{ http *transport }
-
-func NewPreviewClient(options ClientOptions) (*PreviewClient, error) {
-	http, err := newTransport(options, "")
-	if err != nil {
-		return nil, err
-	}
-	return &PreviewClient{http: http}, nil
-}
-
-func (c *PreviewClient) Generate(ctx context.Context, input, voice string) (PreviewResult, error) {
-	request := NewPreviewRequest(input)
-	if voice != "" {
-		request.SetVoice(voice)
-	}
-	payload, err := json.Marshal(request)
-	if err != nil {
-		return PreviewResult{}, err
-	}
-	return c.http.wav(ctx, http.MethodPost, "/v1/audio/preview", bytes.NewReader(payload))
 }

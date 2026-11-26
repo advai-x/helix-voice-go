@@ -1,7 +1,7 @@
 /*
 Helix Voice API
 
-Versioned developer speech API and anonymous product preview.
+Versioned developer speech API for authenticated accounts.
 
 API version: 1.0.0
 */
