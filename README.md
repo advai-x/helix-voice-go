@@ -1,10 +1,26 @@
-# Helix Voice SDK for Go
+<p align="center">
+  <img src="https://docs.helixvoice.net/helix-voice-touch-icon.png" alt="Helix Voice" width="64">
+</p>
 
-Use the Helix Voice developer API to generate speech, transcribe audio, and manage voices from a Go service.
+<h1 align="center">Helix Voice SDK for Go</h1>
+
+<p align="center">
+  Generate speech, transcribe audio, and manage voices from your Go application.
+</p>
+
+<p align="center">
+  <a href="https://pkg.go.dev/github.com/advai-x/helix-voice-go"><img src="https://img.shields.io/github/v/tag/advai-x/helix-voice-go?label=Go%20module&amp;sort=semver" alt="Go module version"></a>
+</p>
+
+<p align="center">
+  <a href="https://docs.helixvoice.net/">Developer Docs</a> ·
+  <a href="examples/">Examples</a> ·
+  <a href="https://github.com/Advai-X/helix-voice-go/tags">Version History</a>
+</p>
 
 ## Install
 
-Requires Go 1.18 or later. Run this command in your Go module.
+Requires Go 1.18 or later. Run this command in your Go module. If you are starting a new module, run `go mod init example.com/speech` first.
 
 ```sh
 go get github.com/advai-x/helix-voice-go@v0.2.0
@@ -14,14 +30,51 @@ Import `github.com/advai-x/helix-voice-go`. The package name is `helixvoice`.
 
 ## Quickstart
 
-Run the examples from a checkout of this repository.
+Set `HELIXVOICE_API_KEY` to a server-side API key with `voices:read`, `speech:write`, and `generations:read` scopes.
 
 ```sh
 export HELIXVOICE_API_KEY='YOUR_API_KEY'
-go run ./examples/speech
 ```
 
-The [speech example](examples/speech/main.go) chooses the first available voice returned by `ListVoices`, calls `SaveSpeech`, and writes `speech.wav`. It prints the voice and generation IDs.
+Save this as `main.go` in your module and run `go run main.go`.
+
+```go
+package main
+
+import (
+	"context"
+	"log"
+	"os"
+
+	"github.com/advai-x/helix-voice-go"
+)
+
+func main() {
+	ctx := context.Background()
+	client, err := helixvoice.NewClient("", helixvoice.ClientOptions{
+		BaseURL: os.Getenv("HELIXVOICE_BASE_URL"),
+	})
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	voices, err := client.ListVoices(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if len(voices) == 0 {
+		log.Fatal("No voices are available to this account.")
+	}
+
+	generation, err := client.SaveSpeech(ctx, "Hello from Helix Voice.", voices[0].Id, "speech.wav")
+	if err != nil {
+		log.Fatal(err)
+	}
+	log.Printf("Saved speech.wav (generation %s)", generation.Id)
+}
+```
+
+On success, `speech.wav` is saved in your current directory and the generation ID is printed. See also the [repository example](examples/speech/main.go).
 
 ## API keys and account access
 
